@@ -57,3 +57,9 @@ else ()
 add_library(${PROJECT_NAME} SHARED ${SRC_FILES} ${CU_SRC_FILES})
 target_link_libraries(${PROJECT_NAME} ${LIBRARIES})
 endif()
+
+install(TARGETS ${PROJECT_NAME} LIBRARY DESTINATION lib)
+
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/src/ DESTINATION include/darknet
+            FILES_MATCHING PATTERN "*.h" )
+ 
