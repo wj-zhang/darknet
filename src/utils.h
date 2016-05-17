@@ -6,6 +6,10 @@
 
 #define SECRET_NUM -1234
 
+#if defined (__cplusplus)
+extern "C" {
+#endif
+
 void shuffle(void *arr, size_t n, size_t size);
 void sorta_shuffle(void *arr, size_t n, size_t size, size_t sections);
 void free_ptrs(void **ptrs, int n);
@@ -48,5 +52,8 @@ float find_float_arg(int argc, char **argv, char *arg, float def);
 int find_arg(int argc, char* argv[], char *arg);
 char *find_char_arg(int argc, char **argv, char *arg, char *def);
 
+#if defined (__cplusplus)
+}
 #endif
 
+#endif

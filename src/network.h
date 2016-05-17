@@ -53,6 +53,10 @@ typedef struct network_state {
     network net;
 } network_state;
 
+#if defined (__cplusplus)
+extern "C" {
+#endif
+
 #ifdef GPU
 float train_network_datum_gpu(network net, float *x, float *y);
 float *network_predict_gpu(network net, float *input);
@@ -105,5 +109,8 @@ float get_network_cost(network net);
 int get_network_nuisance(network net);
 int get_network_background(network net);
 
+#if defined (__cplusplus)
+}
+#endif
 #endif
 

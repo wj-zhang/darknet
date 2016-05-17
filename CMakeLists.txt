@@ -35,6 +35,8 @@ endif()
 #BOOST
 FIND_PACKAGE(OpenCV REQUIRED)
 
+add_definitions(-DOPENCV)
+
 include_directories(SYSTEM ${OpenCV_INCLUDE_DIR})
 
 include_directories(src)
@@ -46,7 +48,6 @@ LIST(REMOVE_ITEM SRC_FILES "${PROJECT_SOURCE_DIR}/src/server.c")
 LIST(REMOVE_ITEM SRC_FILES "${PROJECT_SOURCE_DIR}/src/old.c")
 LIST(REMOVE_ITEM SRC_FILES "${PROJECT_SOURCE_DIR}/src/cpu_gemm.c")
 LIST(REMOVE_ITEM SRC_FILES "${PROJECT_SOURCE_DIR}/src/darknet.c")
-LIST(REMOVE_ITEM SRC_FILES "${PROJECT_SOURCE_DIR}/src/yolo.c")
 LIST(REMOVE_ITEM SRC_FILES "${PROJECT_SOURCE_DIR}/src/yolo_demo.c")
 
 if (CUDA_FOUND)
