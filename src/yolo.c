@@ -12,17 +12,17 @@ void train_yolo(char *cfgfile, char *weightfile)
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
     float avg_loss = -1;
-    network net = parse_network_cfg(cfgfile);
+    network * net = parse_network_cfg(cfgfile);
     if(weightfile){
-        load_weights(&net, weightfile);
+        load_weights(net, weightfile);
     }
-    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net.learning_rate, net.momentum, net.decay);
-    int imgs = net.batch*net.subdivisions;
-    int i = *net.seen/imgs;
+    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
+    int imgs = net->batch*net->subdivisions;
+    int i = *net->seen/imgs;
     data train, buffer;
 
 
-    layer l = net.layers[net.n - 1];
+    layer l = net->layers[net->n - 1];
 
     int side = l.side;
     int classes = l.classes;
@@ -33,8 +33,8 @@ void train_yolo(char *cfgfile, char *weightfile)
     char **paths = (char **)list_to_array(plist);
 
     load_args args = {0};
-    args.w = net.w;
-    args.h = net.h;
+    args.w = net->w;
+    args.h = net->h;
     args.paths = paths;
     args.n = imgs;
     args.m = plist->size;
@@ -47,7 +47,7 @@ void train_yolo(char *cfgfile, char *weightfile)
     pthread_t load_thread = load_data_in_thread(args);
     clock_t time;
     //while(i*imgs < N*120){
-    while(get_current_batch(net) < net.max_batches){
+    while(get_current_batch(net) < net->max_batches){
         i += 1;
         time=clock();
         pthread_join(load_thread, 0);
@@ -125,12 +125,12 @@ void print_yolo_detections(FILE **fps, char *id, box *boxes, float **probs, int 
 
 void validate_yolo(char *cfgfile, char *weightfile)
 {
-    network net = parse_network_cfg(cfgfile);
+    network * net = parse_network_cfg(cfgfile);
     if(weightfile){
-        load_weights(&net, weightfile);
+        load_weights(net, weightfile);
     }
-    set_batch_network(&net, 1);
-    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", net.learning_rate, net.momentum, net.decay);
+    set_batch_network(net, 1);
+    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
     srand(time(0));
 
     char *base = "results/comp4_det_test_";
@@ -138,7 +138,7 @@ void validate_yolo(char *cfgfile, char *weightfile)
     //list *plist = get_paths("data/voc.2012.test");
     char **paths = (char **)list_to_array(plist);
 
-    layer l = net.layers[net.n-1];
+    layer l = net->layers[net->n-1];
     int classes = l.classes;
     int square = l.sqrt;
     int side = l.side;
@@ -170,8 +170,8 @@ void validate_yolo(char *cfgfile, char *weightfile)
     pthread_t *thr = calloc(nthreads, sizeof(pthread_t));
 
     load_args args = {0};
-    args.w = net.w;
-    args.h = net.h;
+    args.w = net->w;
+    args.h = net->h;
     args.type = IMAGE_DATA;
 
     for(t = 0; t < nthreads; ++t){
@@ -214,19 +214,19 @@ void validate_yolo(char *cfgfile, char *weightfile)
 
 void validate_yolo_recall(char *cfgfile, char *weightfile)
 {
-    network net = parse_network_cfg(cfgfile);
+    network * net = parse_network_cfg(cfgfile);
     if(weightfile){
-        load_weights(&net, weightfile);
+        load_weights(net, weightfile);
     }
-    set_batch_network(&net, 1);
-    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", net.learning_rate, net.momentum, net.decay);
+    set_batch_network(net, 1);
+    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
     srand(time(0));
 
     char *base = "results/comp4_det_test_";
     list *plist = get_paths("data/voc.2007.test");
     char **paths = (char **)list_to_array(plist);
 
-    layer l = net.layers[net.n-1];
+    layer l = net->layers[net->n-1];
     int classes = l.classes;
     int square = l.sqrt;
     int side = l.side;
@@ -257,7 +257,7 @@ void validate_yolo_recall(char *cfgfile, char *weightfile)
     for(i = 0; i < m; ++i){
         char *path = paths[i];
         image orig = load_image_color(path, 0, 0);
-        image sized = resize_image(orig, net.w, net.h);
+        image sized = resize_image(orig, net->w, net->h);
         char *id = basecfg(path);
         float *predictions = network_predict(net, sized.data);
         convert_yolo_detections(predictions, classes, l.n, square, side, 1, 1, thresh, probs, boxes, 1);
@@ -301,12 +301,12 @@ void validate_yolo_recall(char *cfgfile, char *weightfile)
 void test_yolo(char *cfgfile, char *weightfile, char *filename, float thresh)
 {
 
-    network net = parse_network_cfg(cfgfile);
+    network * net = parse_network_cfg(cfgfile);
     if(weightfile){
-        load_weights(&net, weightfile);
+        load_weights(net, weightfile);
     }
-    detection_layer l = net.layers[net.n-1];
-    set_batch_network(&net, 1);
+    detection_layer l = net->layers[net->n-1];
+    set_batch_network(net, 1);
     srand(2222222);
     clock_t time;
     char buff[256];
@@ -327,7 +327,7 @@ void test_yolo(char *cfgfile, char *weightfile, char *filename, float thresh)
             strtok(input, "\n");
         }
         image im = load_image_color(input,0,0);
-        image sized = resize_image(im, net.w, net.h);
+        image sized = resize_image(im, net->w, net->h);
         float *X = sized.data;
         time=clock();
         float *predictions = network_predict(net, X);
@@ -358,13 +358,13 @@ image ipl_to_image(IplImage* src);
 
 void demo_swag(char *cfgfile, char *weightfile, float thresh)
 {
-network net = parse_network_cfg(cfgfile);
+network * net = parse_network_cfg(cfgfile);
 if(weightfile){
-load_weights(&net, weightfile);
+load_weights(net, weightfile);
 }
-detection_layer layer = net.layers[net.n-1];
+detection_layer layer = net->layers[net->n-1];
 CvCapture *capture = cvCaptureFromCAM(-1);
-set_batch_network(&net, 1);
+set_batch_network(net, 1);
 srand(2222222);
 while(1){
 IplImage* frame = cvQueryFrame(capture);
@@ -372,7 +372,7 @@ image im = ipl_to_image(frame);
 cvReleaseImage(&frame);
 rgbgr_image(im);
 
-image sized = resize_image(im, net.w, net.h);
+image sized = resize_image(im, net->w, net->h);
 float *X = sized.data;
 float *predictions = network_predict(net, X);
 draw_swag(im, predictions, layer.side, layer.n, "predictions", thresh);

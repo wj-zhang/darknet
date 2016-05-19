@@ -28,17 +28,17 @@ void train_coco(char *cfgfile, char *weightfile)
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
     float avg_loss = -1;
-    network net = parse_network_cfg(cfgfile);
+    network * net = parse_network_cfg(cfgfile);
     if(weightfile){
-        load_weights(&net, weightfile);
+        load_weights(net, weightfile);
     }
-    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net.learning_rate, net.momentum, net.decay);
-    int imgs = net.batch*net.subdivisions;
-    int i = *net.seen/imgs;
+    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
+    int imgs = net->batch*net->subdivisions;
+    int i = *net->seen/imgs;
     data train, buffer;
 
 
-    layer l = net.layers[net.n - 1];
+    layer l = net->layers[net->n - 1];
 
     int side = l.side;
     int classes = l.classes;
@@ -49,8 +49,8 @@ void train_coco(char *cfgfile, char *weightfile)
     char **paths = (char **)list_to_array(plist);
 
     load_args args = {0};
-    args.w = net.w;
-    args.h = net.h;
+    args.w = net->w;
+    args.h = net->h;
     args.paths = paths;
     args.n = imgs;
     args.m = plist->size;
@@ -63,7 +63,7 @@ void train_coco(char *cfgfile, char *weightfile)
     pthread_t load_thread = load_data_in_thread(args);
     clock_t time;
     //while(i*imgs < N*120){
-    while(get_current_batch(net) < net.max_batches){
+    while(get_current_batch(net) < net->max_batches){
         i += 1;
         time=clock();
         pthread_join(load_thread, 0);
@@ -73,7 +73,7 @@ void train_coco(char *cfgfile, char *weightfile)
         printf("Loaded: %lf seconds\n", sec(clock()-time));
 
         /*
-           image im = float_to_image(net.w, net.h, 3, train.X.vals[113]);
+           image im = float_to_image(net->w, net->h, 3, train.X.vals[113]);
            image copy = copy_image(im);
            draw_coco(copy, train.y.vals[113], 7, "truth");
            cvWaitKey(0);
@@ -159,12 +159,12 @@ int get_coco_image_id(char *filename)
 
 void validate_coco(char *cfgfile, char *weightfile)
 {
-    network net = parse_network_cfg(cfgfile);
+    network * net = parse_network_cfg(cfgfile);
     if(weightfile){
-        load_weights(&net, weightfile);
+        load_weights(net, weightfile);
     }
-    set_batch_network(&net, 1);
-    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", net.learning_rate, net.momentum, net.decay);
+    set_batch_network(net, 1);
+    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
     srand(time(0));
 
     char *base = "results/";
@@ -173,7 +173,7 @@ void validate_coco(char *cfgfile, char *weightfile)
     //list *plist = get_paths("/home/pjreddie/data/voc/test/2007_test.txt");
     char **paths = (char **)list_to_array(plist);
 
-    layer l = net.layers[net.n-1];
+    layer l = net->layers[net->n-1];
     int classes = l.classes;
     int square = l.sqrt;
     int side = l.side;
@@ -204,8 +204,8 @@ void validate_coco(char *cfgfile, char *weightfile)
     pthread_t *thr = calloc(nthreads, sizeof(pthread_t));
 
     load_args args = {0};
-    args.w = net.w;
-    args.h = net.h;
+    args.w = net->w;
+    args.h = net->h;
     args.type = IMAGE_DATA;
 
     for(t = 0; t < nthreads; ++t){
@@ -251,19 +251,19 @@ void validate_coco(char *cfgfile, char *weightfile)
 
 void validate_coco_recall(char *cfgfile, char *weightfile)
 {
-    network net = parse_network_cfg(cfgfile);
+    network * net = parse_network_cfg(cfgfile);
     if(weightfile){
-        load_weights(&net, weightfile);
+        load_weights(net, weightfile);
     }
-    set_batch_network(&net, 1);
-    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", net.learning_rate, net.momentum, net.decay);
+    set_batch_network(net, 1);
+    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
     srand(time(0));
 
     char *base = "results/comp4_det_test_";
     list *plist = get_paths("/home/pjreddie/data/voc/test/2007_test.txt");
     char **paths = (char **)list_to_array(plist);
 
-    layer l = net.layers[net.n-1];
+    layer l = net->layers[net->n-1];
     int classes = l.classes;
     int square = l.sqrt;
     int side = l.side;
@@ -295,7 +295,7 @@ void validate_coco_recall(char *cfgfile, char *weightfile)
     for(i = 0; i < m; ++i){
         char *path = paths[i];
         image orig = load_image_color(path, 0, 0);
-        image sized = resize_image(orig, net.w, net.h);
+        image sized = resize_image(orig, net->w, net->h);
         char *id = basecfg(path);
         float *predictions = network_predict(net, sized.data);
         convert_coco_detections(predictions, classes, l.n, square, side, 1, 1, thresh, probs, boxes, 1);
@@ -339,12 +339,12 @@ void validate_coco_recall(char *cfgfile, char *weightfile)
 void test_coco(char *cfgfile, char *weightfile, char *filename, float thresh)
 {
 
-    network net = parse_network_cfg(cfgfile);
+    network * net = parse_network_cfg(cfgfile);
     if(weightfile){
-        load_weights(&net, weightfile);
+        load_weights(net, weightfile);
     }
-    detection_layer l = net.layers[net.n-1];
-    set_batch_network(&net, 1);
+    detection_layer l = net->layers[net->n-1];
+    set_batch_network(net, 1);
     srand(2222222);
     float nms = .4;
     clock_t time;
@@ -365,7 +365,7 @@ void test_coco(char *cfgfile, char *weightfile, char *filename, float thresh)
             strtok(input, "\n");
         }
         image im = load_image_color(input,0,0);
-        image sized = resize_image(im, net.w, net.h);
+        image sized = resize_image(im, net->w, net->h);
         float *X = sized.data;
         time=clock();
         float *predictions = network_predict(net, X);

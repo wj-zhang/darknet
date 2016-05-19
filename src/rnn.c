@@ -63,19 +63,19 @@ void train_char_rnn(char *cfgfile, char *weightfile, char *filename)
     char *base = basecfg(cfgfile);
     fprintf(stderr, "%s\n", base);
     float avg_loss = -1;
-    network net = parse_network_cfg(cfgfile);
+    network * net = parse_network_cfg(cfgfile);
     if(weightfile){
-        load_weights(&net, weightfile);
+        load_weights(net, weightfile);
     }
     int inputs = get_network_input_size(net);
-    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", net.learning_rate, net.momentum, net.decay);
-    int batch = net.batch;
-    int steps = net.time_steps;
-    //*net.seen = 0;
-    int i = (*net.seen)/net.batch;
+    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
+    int batch = net->batch;
+    int steps = net->time_steps;
+    //*net->seen = 0;
+    int i = (*net->seen)/net->batch;
 
     clock_t time;
-    while(get_current_batch(net) < net.max_batches){
+    while(get_current_batch(net) < net->max_batches){
         i += 1;
         time=clock();
         float_pair p = get_rnn_data(text, inputs, size, batch/steps, steps);
@@ -109,14 +109,14 @@ void test_char_rnn(char *cfgfile, char *weightfile, int num, char *seed, float t
     char *base = basecfg(cfgfile);
     fprintf(stderr, "%s\n", base);
 
-    network net = parse_network_cfg(cfgfile);
+    network * net = parse_network_cfg(cfgfile);
     if(weightfile){
-        load_weights(&net, weightfile);
+        load_weights(net, weightfile);
     }
     int inputs = get_network_input_size(net);
 
     int i, j;
-    for(i = 0; i < net.n; ++i) net.layers[i].temperature = temp;
+    for(i = 0; i < net->n; ++i) net->layers[i].temperature = temp;
     unsigned char c;
     int len = strlen(seed);
     float *input = calloc(inputs, sizeof(float));
@@ -149,9 +149,9 @@ void valid_char_rnn(char *cfgfile, char *weightfile)
     char *base = basecfg(cfgfile);
     fprintf(stderr, "%s\n", base);
 
-    network net = parse_network_cfg(cfgfile);
+    network * net = parse_network_cfg(cfgfile);
     if(weightfile){
-        load_weights(&net, weightfile);
+        load_weights(net, weightfile);
     }
     int inputs = get_network_input_size(net);
 

@@ -19,11 +19,11 @@ void train_go(char *cfgfile, char *weightfile)
     float avg_loss = -1;
     char *base = basecfg(cfgfile);
     printf("%s\n", base);
-    network net = parse_network_cfg(cfgfile);
+    network * net = parse_network_cfg(cfgfile);
     if(weightfile){
-        load_weights(&net, weightfile);
+        load_weights(net, weightfile);
     }
-    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net.learning_rate, net.momentum, net.decay);
+    printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net->learning_rate, net->momentum, net->decay);
 
     char *backup_directory = "/home/pjreddie/backup/";
 
@@ -33,11 +33,11 @@ void train_go(char *cfgfile, char *weightfile)
     data train = load_go(buff);
 
     int N = train.X.rows;
-    int epoch = (*net.seen)/N;
-    while(get_current_batch(net) < net.max_batches || net.max_batches == 0){
+    int epoch = (*net->seen)/N;
+    while(get_current_batch(net) < net->max_batches || net->max_batches == 0){
         clock_t time=clock();
 
-        data batch = get_random_data(train, net.batch);
+        data batch = get_random_data(train, net->batch);
         int i;
         for(i = 0; i < batch.X.rows; ++i){
             int flip = rand()%2;
@@ -60,9 +60,9 @@ void train_go(char *cfgfile, char *weightfile)
         free_data(batch);
         if(avg_loss == -1) avg_loss = loss;
         avg_loss = avg_loss*.95 + loss*.05;
-        printf("%d, %.3f: %f, %f avg, %f rate, %lf seconds, %d images\n", get_current_batch(net), (float)(*net.seen)/N, loss, avg_loss, get_current_rate(net), sec(clock()-time), *net.seen);
-        if(*net.seen/N > epoch){
-            epoch = *net.seen/N;
+        printf("%d, %.3f: %f, %f avg, %f rate, %lf seconds, %d images\n", get_current_batch(net), (float)(*net->seen)/N, loss, avg_loss, get_current_rate(net), sec(clock()-time), *net->seen);
+        if(*net->seen/N > epoch){
+            epoch = *net->seen/N;
             char buff[256];
             sprintf(buff, "%s/%s_%d.weights",backup_directory,base, epoch);
             save_weights(net, buff);
@@ -178,12 +178,12 @@ void flip_board(float *board)
 
 void test_go(char *filename, char *weightfile, int multi)
 {
-    network net = parse_network_cfg(filename);
+    network * net = parse_network_cfg(filename);
     if(weightfile){
-        load_weights(&net, weightfile);
+        load_weights(net, weightfile);
     }
     srand(time(0));
-    set_batch_network(&net, 1);
+    set_batch_network(net, 1);
     float *board = calloc(19*19, sizeof(float));
     float *move = calloc(19*19, sizeof(float));
     int color = 1;

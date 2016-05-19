@@ -19,7 +19,7 @@ extern image coco_labels[];
 
 static float **probs;
 static box *boxes;
-static network net;
+static network * net;
 static image in   ;
 static image in_s ;
 static image det  ;
@@ -37,7 +37,7 @@ static float *avg;
 void *fetch_in_thread_coco(void *ptr)
 {
     in = get_image_from_stream(cap);
-    in_s = resize_image(in, net.w, net.h);
+    in_s = resize_image(in, net->w, net->h);
     return 0;
 }
 
@@ -45,7 +45,7 @@ void *detect_in_thread_coco(void *ptr)
 {
     float nms = .4;
 
-    detection_layer l = net.layers[net.n-1];
+    detection_layer l = net->layers[net->n-1];
     float *X = det_s.data;
     float *prediction = network_predict(net, X);
 
@@ -74,9 +74,9 @@ void demo_coco(char *cfgfile, char *weightfile, float thresh, int cam_index, con
     printf("COCO demo\n");
     net = parse_network_cfg(cfgfile);
     if(weightfile){
-        load_weights(&net, weightfile);
+        load_weights(net, weightfile);
     }
-    set_batch_network(&net, 1);
+    set_batch_network(net, 1);
 
     srand(2222222);
 
@@ -90,7 +90,7 @@ void demo_coco(char *cfgfile, char *weightfile, float thresh, int cam_index, con
     cvNamedWindow("COCO", CV_WINDOW_NORMAL); 
     cvResizeWindow("COCO", 512, 512);
 
-    detection_layer l = net.layers[net.n-1];
+    detection_layer l = net->layers[net->n-1];
     int j;
 
     avg = (float *) calloc(l.outputs, sizeof(float));

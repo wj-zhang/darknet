@@ -47,7 +47,7 @@ int socket_setup(int server)
 typedef struct{
     int fd;
     int counter;
-    network net;
+    network * net;
 } connection_info;
 
 void read_and_add_into(int fd, float *a, int n)
@@ -69,34 +69,34 @@ void handle_connection(void *pointer)
         save_network(info.net, buff);
     }
     int fd = info.fd;
-    network net = info.net;
+    network * net = info.net;
     int i;
-    for(i = 0; i < net.n; ++i){
-        if(net.types[i] == CONVOLUTIONAL){
-            convolutional_layer layer = *(convolutional_layer *) net.layers[i];
+    for(i = 0; i < net->n; ++i){
+        if(net->types[i] == CONVOLUTIONAL){
+            convolutional_layer layer = *(convolutional_layer *) net->layers[i];
 
             read_and_add_into(fd, layer.bias_updates, layer.n);
             int num = layer.n*layer.c*layer.size*layer.size;
             read_and_add_into(fd, layer.filter_updates, num);
         }
-        if(net.types[i] == CONNECTED){
-            connected_layer layer = *(connected_layer *) net.layers[i];
+        if(net->types[i] == CONNECTED){
+            connected_layer layer = *(connected_layer *) net->layers[i];
 
             read_and_add_into(fd, layer.bias_updates, layer.outputs);
             read_and_add_into(fd, layer.weight_updates, layer.inputs*layer.outputs);
         }
     }
-    for(i = 0; i < net.n; ++i){
-        if(net.types[i] == CONVOLUTIONAL){
-            convolutional_layer layer = *(convolutional_layer *) net.layers[i];
+    for(i = 0; i < net->n; ++i){
+        if(net->types[i] == CONVOLUTIONAL){
+            convolutional_layer layer = *(convolutional_layer *) net->layers[i];
             update_convolutional_layer(layer);
 
             write_all(fd, (char*) layer.biases, layer.n*sizeof(float));
             int num = layer.n*layer.c*layer.size*layer.size;
             write_all(fd, (char*) layer.filters, num*sizeof(float));
         }
-        if(net.types[i] == CONNECTED){
-            connected_layer layer = *(connected_layer *) net.layers[i];
+        if(net->types[i] == CONNECTED){
+            connected_layer layer = *(connected_layer *) net->layers[i];
             update_connected_layer(layer);
             write_all(fd, (char *)layer.biases, layer.outputs*sizeof(float));
             write_all(fd, (char *)layer.weights, layer.outputs*layer.inputs*sizeof(float));
@@ -106,7 +106,7 @@ void handle_connection(void *pointer)
     close(fd);
 }
 
-void server_update(network net)
+void server_update(network * net)
 {
     int fd = socket_setup(1);
     int counter = 18000;
@@ -130,7 +130,7 @@ void server_update(network net)
     close(fd);
 }
 
-void client_update(network net, char *address)
+void client_update(network * net, char *address)
 {
     int fd = socket_setup(0);
 
@@ -158,17 +158,17 @@ void client_update(network net, char *address)
     /* send a message to the server */
     int i;
     //printf("Sending\n");
-    for(i = 0; i < net.n; ++i){
-        if(net.types[i] == CONVOLUTIONAL){
-            convolutional_layer layer = *(convolutional_layer *) net.layers[i];
+    for(i = 0; i < net->n; ++i){
+        if(net->types[i] == CONVOLUTIONAL){
+            convolutional_layer layer = *(convolutional_layer *) net->layers[i];
             write_all(fd, (char*) layer.bias_updates, layer.n*sizeof(float));
             int num = layer.n*layer.c*layer.size*layer.size;
             write_all(fd, (char*) layer.filter_updates, num*sizeof(float));
             memset(layer.bias_updates, 0, layer.n*sizeof(float));
             memset(layer.filter_updates, 0, num*sizeof(float));
         }
-        if(net.types[i] == CONNECTED){
-            connected_layer layer = *(connected_layer *) net.layers[i];
+        if(net->types[i] == CONNECTED){
+            connected_layer layer = *(connected_layer *) net->layers[i];
             write_all(fd, (char *)layer.bias_updates, layer.outputs*sizeof(float));
             write_all(fd, (char *)layer.weight_updates, layer.outputs*layer.inputs*sizeof(float));
             memset(layer.bias_updates, 0, layer.outputs*sizeof(float));
@@ -177,9 +177,9 @@ void client_update(network net, char *address)
     }
     //printf("Sent\n");
 
-    for(i = 0; i < net.n; ++i){
-        if(net.types[i] == CONVOLUTIONAL){
-            convolutional_layer layer = *(convolutional_layer *) net.layers[i];
+    for(i = 0; i < net->n; ++i){
+        if(net->types[i] == CONVOLUTIONAL){
+            convolutional_layer layer = *(convolutional_layer *) net->layers[i];
 
             read_all(fd, (char*) layer.biases, layer.n*sizeof(float));
             int num = layer.n*layer.c*layer.size*layer.size;
@@ -189,8 +189,8 @@ void client_update(network net, char *address)
             push_convolutional_layer(layer);
             #endif
         }
-        if(net.types[i] == CONNECTED){
-            connected_layer layer = *(connected_layer *) net.layers[i];
+        if(net->types[i] == CONNECTED){
+            connected_layer layer = *(connected_layer *) net->layers[i];
 
             read_all(fd, (char *)layer.biases, layer.outputs*sizeof(float));
             read_all(fd, (char *)layer.weights, layer.outputs*layer.inputs*sizeof(float));

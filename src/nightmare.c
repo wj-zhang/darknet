@@ -57,14 +57,14 @@ void optimize_picture(network *net, image orig, int max_layer, float scale, floa
     state.input = cuda_make_array(im.data, im.w*im.h*im.c);
     state.delta = cuda_make_array(im.data, im.w*im.h*im.c);
 
-    forward_network_gpu(*net, state);
+    forward_network_gpu(net, state);
     copy_ongpu(last.outputs, last.output_gpu, 1, last.delta_gpu, 1);
 
     cuda_pull_array(last.delta_gpu, last.delta, last.outputs);
     calculate_loss(last.delta, last.delta, last.outputs, thresh);
     cuda_push_array(last.delta_gpu, last.delta, last.outputs);
 
-    backward_network_gpu(*net, state);
+    backward_network_gpu(net, state);
 
     cuda_pull_array(state.delta, delta.data, im.w*im.h*im.c);
     cuda_free(state.input);
@@ -72,10 +72,10 @@ void optimize_picture(network *net, image orig, int max_layer, float scale, floa
 #else
     state.input = im.data;
     state.delta = delta.data;
-    forward_network(*net, state);
+    forward_network(net, state);
     copy_cpu(last.outputs, last.output, 1, last.delta, 1);
     calculate_loss(last.output, last.delta, last.outputs, thresh);
-    backward_network(*net, state);
+    backward_network(net, state);
 #endif
 
     if(flip) flip_image(delta);
@@ -135,7 +135,7 @@ void smooth(image recon, image update, float lambda, int num)
     }
 }
 
-void reconstruct_picture(network net, float *features, image recon, image update, float rate, float momentum, float lambda, int smooth_size, int iters)
+void reconstruct_picture(network * net, float *features, image recon, image update, float rate, float momentum, float lambda, int smooth_size, int iters)
 {
     int iter = 0;
     for (iter = 0; iter < iters; ++iter) {
@@ -207,12 +207,12 @@ void run_nightmare(int argc, char **argv)
     int reconstruct = find_arg(argc, argv, "-reconstruct");
     int smooth_size = find_int_arg(argc, argv, "-smooth", 1);
 
-    network net = parse_network_cfg(cfg);
-    load_weights(&net, weights);
+    network * net = parse_network_cfg(cfg);
+    load_weights(net, weights);
     char *cfgbase = basecfg(cfg);
     char *imbase = basecfg(input);
 
-    set_batch_network(&net, 1);
+    set_batch_network(net, 1);
     image im = load_image_color(input, 0, 0);
     if(0){
         float scale = 1;
@@ -228,7 +228,7 @@ void run_nightmare(int argc, char **argv)
     float *features = 0;
     image update;
     if (reconstruct){
-        resize_network(&net, im.w, im.h);
+        resize_network(net, im.w, im.h);
 
         int zz = 0;
         network_predict(net, im.data);
