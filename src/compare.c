@@ -128,7 +128,7 @@ void validate_compare(char *filename, char *weightfile)
         printf("Loaded: %d images in %lf seconds\n", val.X.rows, sec(clock()-time));
 
         time=clock();
-        matrix pred = network_predict_data(&net, val);
+        matrix pred = network_predict_data(net, val);
         int j,k;
         for(j = 0; j < val.y.rows; ++j){
             for(k = 0; k < 20; ++k){

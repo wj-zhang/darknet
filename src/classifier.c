@@ -550,7 +550,7 @@ void test_classifier(char *datacfg, char *cfgfile, char *weightfile, int target_
         fprintf(stderr, "Loaded: %d images in %lf seconds\n", val.X.rows, sec(clock()-time));
 
         time=clock();
-        matrix pred = network_predict_data(&net, val);
+        matrix pred = network_predict_data(net, val);
 
         int i, j;
         if (target_layer >= 0){

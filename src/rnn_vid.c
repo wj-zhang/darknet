@@ -155,7 +155,7 @@ void generate_vid_rnn(char *cfgfile, char *weightfile)
     if(weightfile){
         load_weights(net, weightfile);
     }
-    set_batch_network(&extractor, 1);
+    set_batch_network(extractor, 1);
     set_batch_network(net, 1);
 
     int i;
