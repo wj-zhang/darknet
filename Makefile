@@ -15,6 +15,7 @@ OPTS=-Ofast
 LDFLAGS= -lm -pthread -lstdc++ 
 COMMON= 
 CFLAGS=-Wall -Wfatal-errors 
+LIBFLAGS=-fPIC -shared 
 
 ifeq ($(DEBUG), 1) 
 OPTS=-O0 -g
